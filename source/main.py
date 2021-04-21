@@ -4,11 +4,11 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.screenmanager import ScreenManager, Screen
+from threading import Thread
 import json
 import os
 import pyaudio
 from vosk import Model, KaldiRecognizer
-import asyncio
 
 
 def listen():
@@ -18,6 +18,29 @@ def listen():
         return x['text']
     else:
         return None
+
+
+def recognize(sm):
+    while True:
+        text = listen()
+        if text is not None and text != '':
+            print(text)
+            if text == 'создать форму' and str(sm.current_screen) == "<Screen name='main_screen'>":
+                sm.get_screen('main_screen').pressed(None)
+            if text == 'назад' and str(sm.current_screen) == "<Screen name='fill_screen'>":
+                sm.get_screen('fill_screen').back_main(None)
+            if text == 'имя' and str(sm.current_screen) == "<Screen name='fill_screen'>":
+                sm.get_screen('fill_screen').name_activation(None)
+            if text == 'фамилия' and str(sm.current_screen) == "<Screen name='fill_screen'>":
+                sm.get_screen('fill_screen').surname_activation(None)
+            if text == 'отчество' and str(sm.current_screen) == "<Screen name='fill_screen'>":
+                sm.get_screen('fill_screen').last_activation(None)
+            if text == 'вниз' and str(sm.current_screen) == "<Screen name='fill_screen'>":
+                sm.get_screen('fill_screen').change_curs_down()
+            if text == 'вверх' and str(sm.current_screen) == "<Screen name='fill_screen'>":
+                sm.get_screen('fill_screen').change_curs_up()
+        else:
+            pass
 
 
 class ScreenMain(Screen):
@@ -36,35 +59,6 @@ class ScreenMain(Screen):
 
     def pressed(self, instance):
         self.parent.current = 'fill_screen'
-
-    async def recognize(self, sm):
-        while True:
-            text = listen()
-            if text is not None and text != '':
-                print(text)
-                if text == 'создать форму' and str(sm.current_screen) == "<Screen name='main_screen'>":
-                    self.pressed(None)
-                    await asyncio.sleep(0)
-                if text == 'назад' and str(sm.current_screen) == "<Screen name='fill_screen'>":
-                    sm.get_screen('fill_screen').back_main(None)
-                    await asyncio.sleep(0)
-                if text == 'имя' and str(sm.current_screen) == "<Screen name='fill_screen'>":
-                    sm.get_screen('fill_screen').name_activation(None)
-                    await asyncio.sleep(0)
-                if text == 'фамилия' and str(sm.current_screen) == "<Screen name='fill_screen'>":
-                    sm.get_screen('fill_screen').surname_activation(None)
-                    await asyncio.sleep(0)
-                if text == 'отчество' and str(sm.current_screen) == "<Screen name='fill_screen'>":
-                    sm.get_screen('fill_screen').last_activation(None)
-                    await asyncio.sleep(0)
-                if text == 'вниз' and str(sm.current_screen) == "<Screen name='fill_screen'>":
-                    sm.get_screen('fill_screen').change_curs_down()
-                    await asyncio.sleep(0)
-                if text == 'вверх' and str(sm.current_screen) == "<Screen name='fill_screen'>":
-                    sm.get_screen('fill_screen').change_curs_up()
-                    await asyncio.sleep(0)
-            else:
-                await asyncio.sleep(0)
 
 
 class ScreenFill(Screen):
@@ -105,29 +99,40 @@ class ScreenFill(Screen):
         self.parent.current = 'main_screen'
 
     def name_activation(self, instance):
-        self.first_name_inpt.focus = True
+        self.first_name_inpt.background_color = [3, 1.5, 3, 1]
+        self.surname_name_inpt.background_color = [0, 1.5, 3, 1]
+        self.last_name_inpt.background_color = [0, 1.5, 3, 1]
+        # print('What?')
 
     def surname_activation(self, instance):
-        self.surname_name_inpt.focus = True
+        self.surname_name_inpt.background_color = [3, 1.5, 3, 1]
+        self.first_name_inpt.background_color = [0, 1.5, 3, 1]
+        self.last_name_inpt.background_color = [0, 1.5, 3, 1]
 
     def last_activation(self, instance):
-        self.last_name_inpt.focus = True
+        self.last_name_inpt.background_color = [3, 1.5, 3, 1]
+        self.surname_name_inpt.background_color = [0, 1.5, 3, 1]
+        self.first_name_inpt.background_color = [0, 1.5, 3, 1]
 
     def change_curs_down(self):
-        if self.first_name_inpt.focus:
-            self.surname_name_inpt.focus = True
-        elif self.surname_name_inpt.focus:
-            self.last_name_inpt.focus = True
+        if self.first_name_inpt.background_color == [3, 1.5, 3, 1]:
+            self.first_name_inpt.background_color = [0, 1.5, 3, 1]
+            self.surname_name_inpt.background_color = [3, 1.5, 3, 1]
+        elif self.surname_name_inpt.background_color == [3, 1.5, 3, 1]:
+            self.surname_name_inpt.background_color = [0, 1.5, 3, 1]
+            self.last_name_inpt.background_color = [3, 1.5, 3, 1]
         else:
             pass
 
     def change_curs_up(self):
-        if self.first_name_inpt.focus:
+        if self.first_name_inpt.background_color == [3, 1.5, 3, 1]:
             pass
-        elif self.surname_name_inpt.focus:
-            self.first_name_inpt.focus = True
-        else:
-            self.surname_name_inpt.focus = True
+        elif self.surname_name_inpt.background_color == [3, 1.5, 3, 1]:
+            self.surname_name_inpt.background_color = [0, 1.5, 3, 1]
+            self.first_name_inpt.background_color = [3, 1.5, 3, 1]
+        elif self.last_name_inpt.background_color == [3, 1.5, 3, 1]:
+            self.surname_name_inpt.background_color = [3, 1.5, 3, 1]
+            self.last_name_inpt.background_color = [0, 1.5, 3, 1]
 
 
 class MyApp(App):
@@ -141,10 +146,11 @@ class MyApp(App):
     def build(self):
         return self.sm
 
-
-async def main(application):
-    await asyncio.gather(asyncio.create_task(application.async_run(async_lib='asyncio')),
-                         asyncio.create_task(application.sm.get_screen('main_screen').recognize(application.sm)))
+    def on_start(self):
+        t = Thread(target=recognize, args=[self.sm])
+        # self.parent.current = 'fill_screen'
+        t.daemon = True
+        t.start()
 
 
 if __name__ == '__main__':
@@ -164,4 +170,4 @@ if __name__ == '__main__':
     stream.start_stream()
 
     app = MyApp()
-    asyncio.run(main(application=app))
+    app.run()
